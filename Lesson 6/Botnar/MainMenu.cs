@@ -8,7 +8,7 @@ namespace Lesson_6
 {
     internal class MainMenu
     {
-        public static void DrawMenu()
+        public static void DrawMenu(BankAccount account)
         {
             while (true)
             {
@@ -22,25 +22,25 @@ namespace Lesson_6
                 Console.WriteLine("0. Вернуть карту");
 
 
-                var key = Console.ReadKey(true);
+                var key = Console.ReadKey();
                 switch (key.Key)
                 {
                     case ConsoleKey.D1 or ConsoleKey.NumPad1:
-                        // Вызов метода проверки баланса
+                        Balance.Draw(account);
                         break;
                     case ConsoleKey.D2 or ConsoleKey.NumPad2:
-                        // Вызов метода снятия денег
+                        Withdraw.Draw(account);
                         break;
                     case ConsoleKey.D3 or ConsoleKey.NumPad3:
-                        // Вызов метода внесения денег
+                        Deposit.Draw(account);
                         break;
                     case ConsoleKey.D4 or ConsoleKey.NumPad4:
-                        // Вызов метода истории транзакций
+                        TransactionsHistory.Draw(account);
                         break;
                     case ConsoleKey.D5 or ConsoleKey.NumPad5:
-                        // Вызов метода смены пина
+                        ChangePin.SetNewPin(account);
                         break;
-                    case ConsoleKey.D0:
+                    case ConsoleKey.D0 or ConsoleKey.NumPad0:
                         WelcomeScreen.DrawWelcomeScreen();
                         break;
                 }

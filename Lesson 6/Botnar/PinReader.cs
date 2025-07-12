@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lesson_6
 {
-    public class PinReader
+    internal class PinReader
     {
         public static string GetPin()
         {
