@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 namespace ConsoleApp8
 {
     internal class Books
-    {
-        string bookInfo;
+    {        
         public string ShowBook()
         {
-           return bookInfo;
+            string bookInfo;
+            return bookInfo;
         }
 
     }

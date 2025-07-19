@@ -17,7 +17,7 @@
                     switch (action)
                     {
                         case 1:
-                            store.ShowAllBooks();
+                            store.ShowAllBookNames();
                             break;
                         case 2:
                             store.ShowGenreBooks();

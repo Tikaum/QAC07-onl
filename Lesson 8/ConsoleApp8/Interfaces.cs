@@ -13,7 +13,7 @@ namespace ConsoleApp8
 
     interface IStore
     {
-        void ShowAllBooks();
+        void ShowAllBookNames();
         void FindBook();
         void ShowGenreBooks();
         void ShowMenu();
