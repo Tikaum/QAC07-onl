@@ -31,7 +31,7 @@ namespace BookStore.User
         public void ShowPurchaseHistory()
         {
             Console.WriteLine("\nИстория покупок:");
-            Console.WriteLine("=================");
+            Console.WriteLine();
 
             if (_purchaseHistory.Count == 0)
             {
