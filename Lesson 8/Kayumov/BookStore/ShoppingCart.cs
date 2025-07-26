@@ -1,43 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BookStore.Interfaces;
+using Homework8;
 
-namespace Homework8
+namespace BookStore
 {
     public class ShoppingCart : IShoppingCart
-    {        
-        public List<(int, string, string, double)> Basket = new List<(int, string, string, double)>(){ };
-        public (int, string, string, double) AddBook = (0, "", "", 0);
+    {
 
-        public void AddToBasket()
+        public List<Book> _booksInBasket;
+
+        public Store _store;        
+
+        public ShoppingCart (Store store)
+        {
+            _booksInBasket = new List<Book>();
+            _store = store;
+        }
+
+        public double TotalSum { get; internal set; }
+
+        public void AddToBasket(int BookIDFromAddToBasket)
+        {
+             Book book = _store.FindBookById(BookIDFromAddToBasket);
+            _booksInBasket.Add(book);
+        }
+
+        public double Payment()
         {            
-            Basket.Add(AddBook);
-            AddBook = (0, "", "", 0);
-            Console.WriteLine("Книга добавлена в корзину.");
-            foreach(var books in Basket)
+            foreach (Book book in _booksInBasket)
             {
-                Console.WriteLine($"{books.Item2}. {books.Item4}");
+                TotalSum = TotalSum + book.Price;
             }
+            return TotalSum;
+           
         }
 
-        public void BuyBook()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void RemoveFromBasket()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void ShowBasket()
-        {
-            foreach (var books in Basket)
-            {
-                Console.WriteLine($"{books.Item2}. {books.Item4}");
-            }
-        }
     }
 }
