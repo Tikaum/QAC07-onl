@@ -24,7 +24,7 @@ namespace ATM
         }
         public void ShowBalance()
         {
-            Console.WriteLine($"Current balance: {balance}  BEL RUB");
+            Console.WriteLine($"Current balance: {balance}  BYN");
         }
         public void Deposit(decimal amount)
         {
@@ -35,7 +35,7 @@ namespace ATM
             }
 
             balance += amount;
-            string record = $"{DateTime.Now}: Deposit +{amount} RUB";
+            string record = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}: Deposit +{amount} BYN";
             transactionHistory.Add(record);
             Console.WriteLine("Deposit successful.");
         }
@@ -54,7 +54,7 @@ namespace ATM
             }
 
             balance -= amount;
-            string record = $"{DateTime.Now}: Withdrawal -{amount} RUB";
+            string record = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}: Withdrawal -{amount} BYN";
             transactionHistory.Add(record);
             Console.WriteLine("Withdrawal successful.");
         }
