@@ -1,11 +1,4 @@
 ﻿using Exams.Интерфейсы;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Exams.Классы
 {
@@ -141,8 +134,7 @@ namespace Exams.Классы
 
             Console.WriteLine($"Вы собираетесь добавить студентов в список экзаменуемых по предмету {NameDiscipline}, на дату: {DateExam}");
             Console.WriteLine("Список студентов, доступных для добавления:");
-            _adminRole.ShowStudents();
-            growingIdStudentInExam();
+            _adminRole.ShowStudents();            
 
             Console.WriteLine($"Вводите последовательно по одному ИД студента, которого нужно добавить в список,\n" +
                 "и число 1 или 2, для обозначения номера попытки сдачи экзамена (после ввода каждого значения нажмите Enter).");
@@ -168,26 +160,31 @@ namespace Exams.Классы
                     Console.WriteLine("Некорректный ввод.");
                     return;
                 }
+
+                growingIdStudentInExam();
+
                 var newStudentInExam = new EducationalEntity(IdStudentInExam, NameDiscipline, DateExam, IDAddingStudent, NameAddingStudent, Attemp, 0);
 
                 Console.WriteLine("Вы успешно добавили студента в список экзаменуемых.");
 
                 _examsWithStudents.Add(newStudentInExam);
 
-                Console.WriteLine("Закончить внесение студентов в список? (нажмите y или Y для выхода, либо иное для продолжения)");
+                Console.WriteLine("Закончить внесение студентов в список? (нажмите y или Y для выхода, либо Enter для продолжения)");
                 string isContinue = Console.ReadLine();
 
-                if (isContinue == "y" || isContinue == "Y")
+                if (isContinue == "y" || isContinue == "Y" || isContinue == "у" || isContinue == "У" )
                 {
                     doAddingStudent = false;
                     continue;
                 }
             }
 
+            var ReportOfAddingStudent = _examsWithStudents.Where(i => i.Name == NameDiscipline && i.ExamDate == DateExam).ToList();
+
             Console.WriteLine($"В экзамене по {NameDiscipline}, назначенном на {DateExam}, будут участововать следующие студенты:");
-            foreach (var s in _examsWithStudents)
+            foreach (var s in ReportOfAddingStudent)
             {
-                Console.WriteLine($"Номер п/п: {s.Id}. Имя студента {s.StudentName}. Попытка: {s.Attempt}");
+                Console.WriteLine($"Студент: {s.StudentName}. Попытка: {s.Attempt}");
             }
             
             Console.ReadKey();
@@ -201,7 +198,7 @@ namespace Exams.Классы
             while (Choice != "3")
             {
                 Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +
-                            "1. Посмотреть списки экзаменов, с участвующими студентами\n" +
+                            "1. Посмотреть списки экзаменов, со студентами\n" +
                             "2. Проставить оценки по экзамену\n" +
                             "3. Выйти в меню преподователя");
 
@@ -218,7 +215,12 @@ namespace Exams.Классы
                         {
                             GiveMarksForExam();
                             break;
-                        }                    
+                        }
+
+                    case "3":
+                        {                            
+                            break;
+                        }
                     default:
                         {
                             Console.WriteLine("Введено неверное значение");
@@ -234,18 +236,73 @@ namespace Exams.Классы
         {
             foreach (var e in _exams)
             {
-                Console.WriteLine(e);
+                Console.WriteLine($"{e.Id}. Экзамен по {e.Name}. Назначен на дату: {e.ExamDate}");
+
+                var studentsForExam = _examsWithStudents.Where(i => i.Name == e.Name && i.ExamDate == e.ExamDate).ToList();
+
+                if(studentsForExam.Count() > 0)
+                {
+                    Console.WriteLine("В экзамене участвуют студенты:");
+                    foreach(var student in studentsForExam)
+                    {
+                        Console.WriteLine(student.StudentName);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("На экзамен никто не записан");
+                }
+
             }
 
         }
 
         public void GiveMarksForExam()
-        {
+        {                           
+            DateOnly CurrentDate = DateOnly.FromDateTime(DateTime.Now);
+
+            var EndedExams = new List<EducationalEntity>();
+
+            foreach (var e in _exams)
+            {
+                EndedExams = _exams.Where(i => i.ExamDate <= CurrentDate).ToList();
+            }
+
+            if (EndedExams.Count() > 0)
+            {
+                Console.WriteLine("На данный момент проведены следующие экзамены:");
+                foreach (var endedExams in EndedExams)
+                {
+                    Console.WriteLine($"{endedExams.Id}, {endedExams.Name}, {endedExams.ExamDate}");
+                }
+
+                Console.WriteLine("Введите ИД экзамена, по которому будут проставляться оценки:");
+                int IdSelectExamToGiveMarks = Convert.ToInt32(Console.ReadLine());
+
+                var NameOfSelectExamToGiveMarks = _exams.First(e => e.Id == IdSelectExamToGiveMarks).Name;
+
+                var StudentsInSelectExamToGiveMarks = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToGiveMarks).ToList();
+
+                foreach (var s in StudentsInSelectExamToGiveMarks)
+                {
+                    Console.WriteLine($"Имя студента {s.StudentName}. Попытка: {s.Attempt}. Оценка: {s.Score}");
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("Пока не проведено ни одного экзамена");
+                Console.ReadKey();                
+            }
+
+
+            
+
+
 
         }
 
 
     }
 }
-//переделать: - порядковый номер студента в списке не меняется
-// - в списке _exams нет записей о внесеных экзаменах, т.е. подтягивается не тот список, вероятно его нет в классе Programm
+

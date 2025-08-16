@@ -31,10 +31,10 @@ namespace Exams.Классы
             ExamDate = examdate;
         }
 
-        public EducationalEntity(int id, string disciplinename, DateOnly examdate, int studentID, string studentname, int attempt, int score)
+        public EducationalEntity(int id, string name, DateOnly examdate, int studentID, string studentname, int attempt, int score)
         {
             Id = id;
-            Name = disciplinename;
+            Name = name;
             ExamDate = examdate;
             StudentID = studentID;
             StudentName = studentname;

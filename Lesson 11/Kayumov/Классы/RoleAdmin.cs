@@ -16,11 +16,11 @@ namespace Exams.Классы
             Console.WriteLine("Введити ваш пароль");
             string Password = Console.ReadLine();
 
-            if (Password == "11111")
+            if (Password == "111")
             {
                 isPasswordRight = true;
                 Console.Clear();
-                Console.WriteLine("Вы успешно зашли в систему");
+                Console.WriteLine("Вы успешно вошли в систему");
             }
             else 
             {
@@ -137,6 +137,7 @@ namespace Exams.Классы
             var newTeacher = new PersonTeacher(IDTeacher, NameTeacher, PasswordTeacher, IDDisciplineTeacher);
 
             _teachers.Add(newTeacher);
+            Console.Clear();
         }
 
         public void ShowTeachers()
@@ -156,6 +157,8 @@ namespace Exams.Классы
 
                 Console.WriteLine($"{t.Id}. {t.Name}. Ведет: {DisciplineName}");
             }
+            Console.ReadKey();
+            Console.Clear();
         }
 
         public List<PersonStudent> _students = new List<PersonStudent>();
