@@ -13,7 +13,7 @@ namespace Exams.Классы
 
         public void EnterToSystem()
         {
-            Console.WriteLine("Введити ваш пароль");
+            Console.WriteLine("Введити ваш пароль (пароль, если что = 111)");
             string Password = Console.ReadLine();
 
             if (Password == "111")
@@ -95,26 +95,57 @@ namespace Exams.Классы
             string kindEntity = "Discipline";
            
             Console.WriteLine("Введите ИД новой учебной дисциплины");
-            int IDDiscipline = Convert.ToInt32(Console.ReadLine());
+
+            if (!int.TryParse(Console.ReadLine(), out int IDDiscipline))
+            {
+                Console.WriteLine("Некорректный ввод ID, при необходимости повторите ввод с другим ИД");
+                return;
+            }
+            bool IdExist = _discipline.Any(i => i.Id == IDDiscipline);
+            if (IdExist)
+            {
+                Console.WriteLine("Учебная дисциплина с таким ИД уже существует, при необходимости повторите ввод с другим ИД");                
+                Console.WriteLine();
+                return;
+            }
 
             Console.WriteLine("Введите название новой учебной дисциплины");
             string NameDiscipline = Console.ReadLine();
+            bool NameExist = _discipline.Any(i => i.Name == NameDiscipline);
+            if (NameExist)
+            {
+                Console.WriteLine("Учебная дисциплина с таким названием уже существует, при необходимости повторите ввод с другим названием");                
+                Console.WriteLine();
+                return;
+            }
 
             var newDiscipline = new EducationalEntity(IDDiscipline, NameDiscipline);
 
-            _discipline.Add(newDiscipline);
+            if(NameDiscipline != "" && NameDiscipline != " ")
+            {
+                _discipline.Add(newDiscipline);
 
-            Console.WriteLine($"Вы успешно добавили новую учебную дисциплину: ID: {IDDiscipline} Наименование: {NameDiscipline}");
-            Console.WriteLine();
+                Console.WriteLine($"Вы успешно добавили новую учебную дисциплину: ID: {IDDiscipline} Наименование: {NameDiscipline}");
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("Неверно введено название учебной дисциплины, при необходимости повторите ввод учебной дисциплины");
+            }
+
+            Console.ReadKey();
+            Console.Clear();
         }
 
         public void ShowDisciplines()
-        { 
+        {
+            Console.WriteLine("Список учебных дисциплин:");
             foreach (var item in _discipline)
             {
                 Console.WriteLine($"{item.Id}. {item.Name}.");
             }
-	    }
+            Console.WriteLine();
+        }
 
         public List<PersonTeacher> _teachers = new List<PersonTeacher>();
         public void AddTeachers()
@@ -122,41 +153,80 @@ namespace Exams.Классы
             string kindEntity = "Teacher";
 
             Console.WriteLine("Введите ИД нового преподавателя");
-            int IDTeacher = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Введите имя нового преподавателя");
+            if (!int.TryParse(Console.ReadLine(), out int IDTeacher))
+            {
+                Console.WriteLine("Некорректный ввод ID.");
+                return;
+            }
+
+            bool IdExist = _teachers.Any(i => i.Id == IDTeacher);
+            if (IdExist)
+            {
+                Console.WriteLine("Преподаватель с таким ИД уже существует, повторите ввод с другим ИД");
+                Console.WriteLine();
+                return;
+            }
+
+            Console.WriteLine("Введите ФИО нового преподавателя");
             string NameTeacher = Console.ReadLine();
-
+            
             Console.WriteLine("Введите его пароль");
             string PasswordTeacher = Console.ReadLine();
 
-            Console.WriteLine("Введите ИД учебной дисциплины, которую он ведет");
             ShowDisciplines();
-            int IDDisciplineTeacher = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("Введите ИД учебной дисциплины (из указанных выше), которую он будет вести:");            
 
-            var newTeacher = new PersonTeacher(IDTeacher, NameTeacher, PasswordTeacher, IDDisciplineTeacher);
+            if (!int.TryParse(Console.ReadLine(), out int IDDisciplineTeacher))
+            {
+                Console.WriteLine("Некорректный ввод ID учебной дисциплины, при необходимости повторите ввод с другим ИД");
+                Console.WriteLine();
+                Console.ReadKey();                
+                return;
+            }                        
 
-            _teachers.Add(newTeacher);
+            if(NameTeacher != "" && NameTeacher != " ")
+            {
+                var newTeacher = new PersonTeacher(IDTeacher, NameTeacher, PasswordTeacher, IDDisciplineTeacher);
+                _teachers.Add(newTeacher);
+                Console.WriteLine("Преподаватель успешно добавлен в список!");
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("Не удалось добавить нового преподавателя из-за неверно указанных ФИО. Повторите ввод его данных.");
+            }
+            Console.ReadKey();
             Console.Clear();
         }
 
         public void ShowTeachers()
         {
-            foreach (var t in _teachers)
+            Console.WriteLine("Список преподавателей:");
+
+            if(_teachers.Count > 0)
             {
-                string DisciplineName = "Ничего не ведет";
-
-                foreach (var d in _discipline)
+                foreach (var t in _teachers)
                 {
-                    if (d.Id == t.DisciplineId)
-                    {
-                        DisciplineName = d.Name;
-                        break;
-                    }
-                }
+                    string DisciplineName = "учебная дисциплина данного преподавателя еще не внесена в список.";
 
-                Console.WriteLine($"{t.Id}. {t.Name}. Ведет: {DisciplineName}");
+                    foreach (var d in _discipline)
+                    {
+                        if (d.Id == t.DisciplineId)
+                        {
+                            DisciplineName = d.Name;
+                            break;
+                        }
+                    }
+
+                    Console.WriteLine($"{t.Id}. {t.Name}. Ведет: {DisciplineName}");
+                }
             }
+            else
+            {
+                Console.WriteLine("преподаватели пока не внесены в список");
+            }
+            
             Console.ReadKey();
             Console.Clear();
         }
@@ -167,22 +237,54 @@ namespace Exams.Классы
             string kindEntity = "Student";
 
             Console.WriteLine("Введите ИД нового студента");
-            int IDStudent = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Введите имя нового студента");
-            string NameStudent = Console.ReadLine();            
+            if (!int.TryParse(Console.ReadLine(), out int IDStudent))
+            {
+                Console.WriteLine("Некорректный ввод ID.");
+                return;
+            }
+            bool IdExist = _students.Any(i => i.Id == IDStudent);
+            if (IdExist)
+            {
+                Console.WriteLine("Студент с таким ИД уже существует, повторите ввод с другим ИД");
+                Console.WriteLine();
+                return;
+            }
 
-            var newStudent = new PersonStudent(IDStudent, NameStudent);
+            Console.WriteLine("Введите ФИО нового студента");
+            string NameStudent = Console.ReadLine();
 
-            _students.Add(newStudent);
+            if (NameStudent != "" && NameStudent != " ")
+            {
+                var newStudent = new PersonStudent(IDStudent, NameStudent);
+                _students.Add(newStudent);
+                Console.WriteLine("Студент успешно добавлен в список!");
+            }
+            else
+            {
+                Console.WriteLine("Не удалось добавить нового студента из-за неверно указанных ФИО. Повторите ввод его данных.");
+            }
+
+            Console.ReadKey();
+            Console.Clear();
         }
 
         public void ShowStudents()
         {
-            foreach (var item in _students)
+            Console.WriteLine("Список студентов:");            
+
+            if (_students.Count > 0)
             {
-                Console.WriteLine($"{item.Id}. {item.Name}.");
+                foreach (var item in _students)
+                {
+                    Console.WriteLine($"{item.Id}. {item.Name}");
+                }
             }
+            else
+            {
+                Console.WriteLine("студенты пока не внесены в список");
+            }
+                        
         }
 
 

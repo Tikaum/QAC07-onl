@@ -7,7 +7,9 @@ namespace Exams
         static void Main(string[] args)
         {
             var admin = new RoleAdmin();
-            var teacher = new RoleTeacher(admin);
+            var examService = new ExamService(null, admin); 
+            var teacher = new RoleTeacher(admin, examService);
+            examService._roleTeacher = teacher;
 
             while (true)
             {
@@ -37,10 +39,29 @@ namespace Exams
                             {
                                 teacher.ActionToSystem();
                             }
-                            else
+
+                            else if (!teacher.isTeacherPasswordRight)
                             {
-                                Console.WriteLine("Введен неверный пароль.\n" +
-                                "1. Повторить ввод\n" +
+                                Console.WriteLine("Введен неверный пароль.");
+                                
+                                Console.WriteLine("1. Повторить вход\n" +
+                                "2. Вернуться в основное меню");
+
+                                string action = Console.ReadLine();
+
+                                if (action == "1")
+                                {
+                                    needRepeatCase2 = true;
+                                }
+                                if (needRepeatCase2)
+                                {
+                                    goto case "2";
+                                }
+                            }
+
+                            else
+                            {                                
+                                Console.WriteLine("1. Повторить ввод\n" +
                                 "2. Вернуться в основное меню");
 
                                 string action = Console.ReadLine();

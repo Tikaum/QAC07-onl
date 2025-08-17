@@ -1,25 +1,33 @@
 ﻿using Exams.Интерфейсы;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Exams.Классы
 {
     public class RoleTeacher : IUserRole
     {              
-        public RoleAdmin _adminRole;        
-        public RoleTeacher(RoleAdmin adminRole)
+        public RoleAdmin _roleAdmin;
+        public ExamService _examService;
+        public RoleTeacher(RoleAdmin roleAdmin, ExamService examService)
         {
-            _adminRole = adminRole;
+            _roleAdmin = roleAdmin;
+            _examService = examService;
         }
         public bool isTeacherPasswordRight { get; set; }
-
+       
         public void EnterToSystem()
         {
-            Console.WriteLine("Введити ваш ID: ");
-            int TeacherID = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("Введити ваш ID: ");            
+
+            if (!int.TryParse(Console.ReadLine(), out int TeacherID))
+            {
+                Console.WriteLine("Некорректный ввод ID. При необходимости повторите ввод.");                
+                return;
+            }
 
             Console.WriteLine("Введити ваш пароль");
             string TeacherPassword = Console.ReadLine();
 
-            var teacher = _adminRole._teachers.FirstOrDefault(t => t.Id == TeacherID);
+            var teacher = _roleAdmin._teachers.FirstOrDefault(t => t.Id == TeacherID);
             isTeacherPasswordRight = teacher != null && teacher.Password == TeacherPassword;
         }                
 
@@ -27,13 +35,15 @@ namespace Exams.Классы
         {
             string TeacherChoice = "0";
 
-            while (TeacherChoice != "4")
+            while (TeacherChoice != "6")
             {
                 Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +
                             "1. Назначить дату экзамена по предмету\n" +
                             "2. Добавить студентов в экзаменационный список\n" +
-                            "3. Проверить экзаменационные списки и проставить оценки по экзаменом\n" +
-                            "4. Выйти в основное меню");
+                            "3. Просмотреть экзаменационные списки\n" +
+                            "4. Просмотреть или проставить оценки по экзаменам\n" +
+                            "5. Просмотреть статистику по студентам\n" +
+                            "6. Выйти в основное меню");
 
                 TeacherChoice = Console.ReadLine();
 
@@ -51,9 +61,27 @@ namespace Exams.Классы
                         }
                     case "3":
                         {
+                            ShowExamAndDateWithStudents();
+                            break;
+                        }
+                    case "4":
+                        {
                             ShowAndGiveMarksForExam();
                             break;
                         }
+                    case "5":
+                        {
+                            Statistics();
+                            break;
+                        }
+
+
+
+                    case "6":
+                        {                            
+                            break;
+                        }
+
                     default:
                         {
                             Console.WriteLine("Введено неверное значение");
@@ -77,29 +105,62 @@ namespace Exams.Классы
         }
         public void SetDataExam()
         {
-            Console.WriteLine("Выберите учебную дисциплину, по которой будет проводиться экзамен,\n" + "и введите ее ID");
+            Console.Clear();
+            Console.WriteLine("Выберите учебную дисциплину по которой будет проводиться экзамен \n" +
+                "(из списка представленного ниже):");            
 
-            _adminRole.ShowDisciplines();           
+            _roleAdmin.ShowDisciplines();
 
+            Console.Write("и введите ее ID: ");
+
+            
             if (!int.TryParse(Console.ReadLine(), out int IDSelectedDiscipline))
             {
-                Console.WriteLine("Некорректный ввод ID.");
+                Console.WriteLine("Некорректный ввод ID учебной дисциплины. При необходимости повторите ввод.");
+                Console.ReadKey();
+                Console.Clear();
                 return;
             }
+            bool IdDisciplineExist = _roleAdmin._discipline.Any(i => i.Id == IDSelectedDiscipline);
+            Console.WriteLine();
 
-            string NameDiscipline = _adminRole._discipline.FirstOrDefault(n => n.Id == IDSelectedDiscipline).Name;
+            if (IdDisciplineExist)
+            {
+                string NameDiscipline = _roleAdmin._discipline.FirstOrDefault(n => n.Id == IDSelectedDiscipline).Name;
+                
+                DateOnly DateExam = DateOnly.FromDateTime(DateTime.Now);
+                bool IsDateExamValid = false;
 
-            Console.WriteLine("Введите дату экзамена, в формате гггг.мм.дд");
+                while (!IsDateExamValid)
+                {
+                    Console.Write("Введите дату экзамена, в формате гггг.мм.дд: ");
 
-            DateOnly DateExam = DateOnly.Parse(Console.ReadLine());
+                    try
+                    {
+                        DateExam = DateOnly.Parse(Console.ReadLine());
+                        IsDateExamValid = true;                        
+                    }
+                    catch (FormatException)
+                    {
+                        Console.WriteLine("Дата введена в неверном формате. Попробуйте ещё раз.");
+                    }
+                }
 
-            growingIdExam();
+                growingIdExam();
 
-            var newExamDate = new EducationalEntity(IdExam, NameDiscipline, DateExam);
+                var newExamDate = new EducationalEntity(IdExam, NameDiscipline, DateExam);
 
-            _exams.Add(newExamDate);
+                _exams.Add(newExamDate);
 
-            Console.WriteLine($"Вы успешно добавили экзамен по {NameDiscipline}, на дату: {DateExam}");
+                Console.WriteLine($"Вы успешно добавили экзамен по {NameDiscipline}, на дату: {DateExam}");
+            }
+            else
+            {
+                Console.WriteLine("Учебной дисциплины с таким ИД не существует. При необходимости повторите ввод.");
+            }
+            
+            Console.ReadKey();
+            Console.Clear();
         }
 
         public List<EducationalEntity> _examsWithStudents = new List<EducationalEntity>();
@@ -113,83 +174,173 @@ namespace Exams.Классы
         }
         public void AddStudentsToExam()
         {
-            Console.WriteLine("Выберите, из представленных ниже, учебную дисциплину и дату экзамена по ней:");
+            bool ExistExam = _exams.Count > 0;
 
-            foreach (var e in _exams)
+            if (ExistExam)
             {
-                Console.WriteLine($"{e.Id}. {e.Name}. {e.ExamDate}");
-            }
+                Console.WriteLine("Выберите, из представленных ниже, экзамен по учебной дисциплине:");
 
-            Console.WriteLine("Введите ID экзамена: ");
-
-            if (!int.TryParse(Console.ReadLine(), out int IDSelectedExam))
-            {
-                Console.WriteLine("Некорректный ввод ID.");
-                return;
-            }
-
-            string NameDiscipline = _exams.FirstOrDefault(n => n.Id == IDSelectedExam).Name;
-
-            DateOnly DateExam = _exams.FirstOrDefault(n => n.Id == IDSelectedExam).ExamDate;
-
-            Console.WriteLine($"Вы собираетесь добавить студентов в список экзаменуемых по предмету {NameDiscipline}, на дату: {DateExam}");
-            Console.WriteLine("Список студентов, доступных для добавления:");
-            _adminRole.ShowStudents();            
-
-            Console.WriteLine($"Вводите последовательно по одному ИД студента, которого нужно добавить в список,\n" +
-                "и число 1 или 2, для обозначения номера попытки сдачи экзамена (после ввода каждого значения нажмите Enter).");
-
-            bool doAddingStudent = true;
-
-            while (doAddingStudent)
-            {
-                Console.Write("ИД = ");
-
-                if (!int.TryParse(Console.ReadLine(), out int IDAddingStudent))
+                foreach (var e in _exams)
                 {
-                    Console.WriteLine("Некорректный ввод ID.");
+                    Console.WriteLine($"{e.Id}. По {e.Name}. Будет проводиться {e.ExamDate}");
+                }
+
+                Console.Write("и введите ID экзамена: ");
+
+                int IDSelectedExam = 0;
+                if (!int.TryParse(Console.ReadLine(), out IDSelectedExam))
+                {
+                    Console.WriteLine("Некорректный ввод ID экзамена. При необходимости повторите ввод.");
+                    Console.WriteLine();
                     return;
                 }
+                Console.WriteLine();
 
-                string NameAddingStudent = _adminRole._students.FirstOrDefault(n => n.Id == IDAddingStudent).Name;
+                bool IdExamExist = _exams.Any(i => i.Id == IDSelectedExam);
 
-                Console.Write("Попытка № = ");
-
-                if (!int.TryParse(Console.ReadLine(), out int Attemp))
+                if (IdExamExist)
                 {
-                    Console.WriteLine("Некорректный ввод.");
-                    return;
+                    string NameDiscipline = _exams.FirstOrDefault(n => n.Id == IDSelectedExam).Name;
+
+                    DateOnly DateExam = _exams.FirstOrDefault(n => n.Id == IDSelectedExam).ExamDate;
+
+                    Console.WriteLine($"Вы собираетесь добавить студентов в список экзаменуемых по предмету {NameDiscipline}, на дату: {DateExam}");
+                    Console.WriteLine();
+                    _roleAdmin.ShowStudents();
+
+                    Console.WriteLine($"Вводите последовательно по одному ИД студента, которого нужно добавить в список,\n" +
+                        "и число 1 или 2, для обозначения номера попытки сдачи экзамена (после ввода каждого значения нажмите Enter).");
+
+                    bool doAddingStudent = true;
+
+                    while (doAddingStudent)
+                    {
+                        Console.Write("ИД студента: ");
+                        
+                        if (!int.TryParse(Console.ReadLine(), out int IDAddingStudent))
+                        {
+                            Console.WriteLine("Некорректный ввод ID студента");
+                            return;
+                        }
+                        bool IDAddingStudentExist = _roleAdmin._students.Any(i => i.Id == IDAddingStudent);
+
+                        if (IDAddingStudentExist)
+                        {
+                            string NameAddingStudent = _roleAdmin._students.FirstOrDefault(n => n.Id == IDAddingStudent).Name;
+
+                            // ToDo - добавить фильтрацию если студент уже добавлен в экзамен
+
+                            Console.Write("Попытка сдачи экзамена №: ");
+
+                            if (!int.TryParse(Console.ReadLine(), out int Attemp))
+                            {
+                                Console.WriteLine("Некорректный ввод номера попытки");
+                                Console.ReadKey();
+                                continue;
+                            }
+
+                            var AttempsOfStudent = _examsWithStudents.Where(a => a.Name == NameDiscipline && a.StudentName == NameAddingStudent).ToList();
+                            int CurrentNumberOfAttemps = AttempsOfStudent.Count;
+
+                            if (Attemp < 1 || Attemp > 2)
+                            {
+                                Console.WriteLine("Количество попыток сдачи экзамена студентом, указано неверно (допустимые значения: 1 или 2).\n" + 
+                                    "Повторите ввод.");
+                                Console.ReadKey();
+                                continue;
+                            }
+
+                            if (CurrentNumberOfAttemps >= 2)
+                            {
+                                Console.WriteLine("Количество попыток сдачи экзамена студентом, превысило допустимый лимит пересдач (не более одной)!");
+                                Console.ReadKey();
+                                return;
+                            }
+
+                            growingIdStudentInExam();
+
+                            var newStudentInExam = new EducationalEntity(IdStudentInExam, NameDiscipline, DateExam, IDAddingStudent, NameAddingStudent, Attemp, 0);
+
+                            _examsWithStudents.Add(newStudentInExam);
+                            Console.WriteLine("Вы успешно добавили студента в список экзаменуемых.");
+                        }
+
+                        else
+                        {
+                            Console.WriteLine("Студента с таким ИД не существует. При необходимости повторите ввод.");
+                            Console.WriteLine();
+                        }
+
+                        Console.WriteLine("Закончить внесение студентов в список? (нажмите y или Y для выхода, либо Enter для продолжения)");
+                        string ToExit = Console.ReadLine();
+
+                        if (ToExit == "y" || ToExit == "Y" || ToExit == "у" || ToExit == "У")
+                        {
+                            doAddingStudent = false;
+                            continue;
+                        }
+                    }
+
+                    var ReportOfAddingStudent = _examsWithStudents.Where(i => i.Name == NameDiscipline && i.ExamDate == DateExam).ToList();
+
+                    Console.WriteLine($"В экзамене по {NameDiscipline}, назначенном на {DateExam}, будут участововать следующие студенты:");
+                    foreach (var s in ReportOfAddingStudent)
+                    {
+                        Console.WriteLine($"Студент: {s.StudentName}. Попытка: {s.Attempt}");
+                    }
                 }
 
-                growingIdStudentInExam();
-
-                var newStudentInExam = new EducationalEntity(IdStudentInExam, NameDiscipline, DateExam, IDAddingStudent, NameAddingStudent, Attemp, 0);
-
-                Console.WriteLine("Вы успешно добавили студента в список экзаменуемых.");
-
-                _examsWithStudents.Add(newStudentInExam);
-
-                Console.WriteLine("Закончить внесение студентов в список? (нажмите y или Y для выхода, либо Enter для продолжения)");
-                string isContinue = Console.ReadLine();
-
-                if (isContinue == "y" || isContinue == "Y" || isContinue == "у" || isContinue == "У" )
+                else
                 {
-                    doAddingStudent = false;
-                    continue;
+                    Console.WriteLine("Экзамена с таким ИД не существует. При необходимости повторите ввод.");
                 }
             }
 
-            var ReportOfAddingStudent = _examsWithStudents.Where(i => i.Name == NameDiscipline && i.ExamDate == DateExam).ToList();
-
-            Console.WriteLine($"В экзамене по {NameDiscipline}, назначенном на {DateExam}, будут участововать следующие студенты:");
-            foreach (var s in ReportOfAddingStudent)
+            else
             {
-                Console.WriteLine($"Студент: {s.StudentName}. Попытка: {s.Attempt}");
-            }
+                Console.WriteLine("Пока не назначено ни одного экзамена");
+            }                
             
             Console.ReadKey();
             Console.Clear();
         }
+
+        public void ShowExamAndDateWithStudents()
+        {
+            bool ExistExam = _exams.Count > 0;
+
+            if (ExistExam)
+            {
+                foreach (var e in _exams)
+                {
+                    Console.WriteLine($"{e.Id}. Экзамен по {e.Name}. Назначен на дату: {e.ExamDate}");
+
+                    var studentsForExam = _examsWithStudents.Where(i => i.Name == e.Name && i.ExamDate == e.ExamDate).ToList();
+
+                    if (studentsForExam.Count() > 0)
+                    {
+                        Console.WriteLine("В экзамене участвуют следующие студенты:");
+                        foreach (var student in studentsForExam)
+                        {
+                            Console.WriteLine(student.StudentName);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("На экзамен никто не записан");
+                    }
+
+                }
+            }
+
+            else
+            {
+                Console.WriteLine("Пока не назначено ни одного экзамена");
+            }
+            Console.ReadKey();
+            Console.Clear();
+        }
+
 
         public void ShowAndGiveMarksForExam()
         {
@@ -197,23 +348,24 @@ namespace Exams.Классы
 
             while (Choice != "3")
             {
-                Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +
-                            "1. Посмотреть списки экзаменов, со студентами\n" +
-                            "2. Проставить оценки по экзамену\n" +
-                            "3. Выйти в меню преподователя");
+                Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +                            
+                            "1. Проставить оценки по экзамену\n" +
+                            "2. Просмотреть оценки по экзамену\n" +
+                            "3. Выйти в меню преподавателя");
 
                 Choice = Console.ReadLine();
 
                 switch (Choice)
-                {
+                {                    
                     case "1":
                         {
-                            ShowExamAndDateWithStudents();
+                            GiveMarksForExam();
                             break;
                         }
+
                     case "2":
                         {
-                            GiveMarksForExam();
+                            ShowExamWithScore();
                             break;
                         }
 
@@ -230,79 +382,224 @@ namespace Exams.Классы
                 }
             }
 
-        }
+        }        
 
-        public void ShowExamAndDateWithStudents()
+        List<EducationalEntity> EndedExams = new List<EducationalEntity>();
+
+        public void WhichEndedExams()
         {
-            foreach (var e in _exams)
-            {
-                Console.WriteLine($"{e.Id}. Экзамен по {e.Name}. Назначен на дату: {e.ExamDate}");
-
-                var studentsForExam = _examsWithStudents.Where(i => i.Name == e.Name && i.ExamDate == e.ExamDate).ToList();
-
-                if(studentsForExam.Count() > 0)
-                {
-                    Console.WriteLine("В экзамене участвуют студенты:");
-                    foreach(var student in studentsForExam)
-                    {
-                        Console.WriteLine(student.StudentName);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("На экзамен никто не записан");
-                }
-
-            }
-
-        }
-
-        public void GiveMarksForExam()
-        {                           
-            DateOnly CurrentDate = DateOnly.FromDateTime(DateTime.Now);
-
-            var EndedExams = new List<EducationalEntity>();
-
+            DateOnly CurrentDate = DateOnly.FromDateTime(DateTime.Now);            
+            
             foreach (var e in _exams)
             {
                 EndedExams = _exams.Where(i => i.ExamDate <= CurrentDate).ToList();
-            }
+            }            
+        }               
+
+        public void GiveMarksForExam()
+        {
+            WhichEndedExams();
 
             if (EndedExams.Count() > 0)
             {
                 Console.WriteLine("На данный момент проведены следующие экзамены:");
                 foreach (var endedExams in EndedExams)
                 {
-                    Console.WriteLine($"{endedExams.Id}, {endedExams.Name}, {endedExams.ExamDate}");
+                    Console.WriteLine($"{endedExams.Id}. По {endedExams.Name}, дата проведения {endedExams.ExamDate}");
                 }
-
-                Console.WriteLine("Введите ИД экзамена, по которому будут проставляться оценки:");
-                int IdSelectExamToGiveMarks = Convert.ToInt32(Console.ReadLine());
-
-                var NameOfSelectExamToGiveMarks = _exams.First(e => e.Id == IdSelectExamToGiveMarks).Name;
-
-                var StudentsInSelectExamToGiveMarks = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToGiveMarks).ToList();
-
-                foreach (var s in StudentsInSelectExamToGiveMarks)
+               
+                Console.WriteLine("Введите ИД экзамена, по которому будут проставляться оценки:");                               
+                if (!int.TryParse(Console.ReadLine(), out int IdSelectExamToGiveScors))
                 {
-                    Console.WriteLine($"Имя студента {s.StudentName}. Попытка: {s.Attempt}. Оценка: {s.Score}");
+                    Console.WriteLine("Некорректный ввод ID экзамена");
+                    return;
                 }
+                bool IDExamExistInEndedExams = EndedExams.Any(i => i.Id == IdSelectExamToGiveScors);                
 
+                if (IDExamExistInEndedExams)
+                {
+                    var NameOfSelectExamToGiveScors = _exams.First(e => e.Id == IdSelectExamToGiveScors).Name;
+                    var DateOfSelectExamToGiveScors = _exams.First(e => e.Id == IdSelectExamToGiveScors).ExamDate;
+
+                    var StudentsInSelectedExamToGiveScors = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToGiveScors && i.ExamDate == DateOfSelectExamToGiveScors).ToList();
+
+                    bool IsExistStudentInSelectExamToGiveScors = StudentsInSelectedExamToGiveScors.Count > 0;
+
+                    if (IsExistStudentInSelectExamToGiveScors)
+                    {
+                        Console.WriteLine("Проставьте оценки для каждого студента:");
+
+                        foreach (var s in StudentsInSelectedExamToGiveScors)
+                        {
+                            Console.Write($"Студент {s.StudentName}, получил оценку: ");
+
+                            if (!int.TryParse(Console.ReadLine(), out int score))
+                            {
+                                Console.WriteLine("Оценка должна быть целочисленным значением. Повторите ввод");
+                                continue;
+                            }
+                            if (score > 1 && score < 6)
+                            {
+                                var studentToUpdate = _examsWithStudents.First(i => i.Name == NameOfSelectExamToGiveScors && i.ExamDate == DateOfSelectExamToGiveScors && i.StudentName == s.StudentName);
+
+                                if (studentToUpdate != null)
+                                {
+                                    studentToUpdate.Score = score;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Недопустимое значение оценки (допустимые значения: 2, 3, 4, 5).\n" +
+                                    "Повторите ввод оценки для данного студента в другой раз.");
+                                continue;
+                            }
+                        }
+
+                        Console.WriteLine($"За экзамен по {NameOfSelectExamToGiveScors} от {DateOfSelectExamToGiveScors} проставлены следующие оценки:");
+
+                        foreach (var s in StudentsInSelectedExamToGiveScors)
+                        {
+                            if (s.Score != 0 && s.Score > 1 && s.Score < 6)
+                            {
+                                Console.WriteLine($"Студент {s.StudentName}, получил оценку: {s.Score}");
+                            }
+
+                            else
+                            {
+                                Console.WriteLine($"Студент {s.StudentName} пока не получил оценку, либо она было проставлена неверно");
+                            }
+                        }
+                        Console.ReadKey();
+                    }
+
+                    else
+                    {
+                        Console.WriteLine("На экзамен с данным ИД не был записан ни один студент.");
+                        Console.ReadKey();
+                    }
+                }
+                                    
+                else
+                {
+                    Console.WriteLine("Экзамен с данным ИД не существует или не был проведен");
+                    Console.ReadKey();
+                }               
             }
             else
             {
                 Console.WriteLine("Пока не проведено ни одного экзамена");
-                Console.ReadKey();                
+                Console.ReadKey();
             }
-
-
-            
-
-
-
         }
 
+        public void ShowExamWithScore()
+        {
+            WhichEndedExams();
 
-    }
+            if (EndedExams.Count() > 0)
+            {
+                Console.WriteLine("На данный момент проведены следующие экзамены:");
+                foreach (var endedExams in EndedExams)
+                {
+                    Console.WriteLine($"{endedExams.Id}. По {endedExams.Name}, дата проведения: {endedExams.ExamDate}");
+                }
+
+                Console.WriteLine("Введите ИД экзамена, по которому будут просматриваться оценки:");                
+                if (!int.TryParse(Console.ReadLine(), out int IdSelectExamToBrowseScors))
+                {
+                    Console.WriteLine("Некорректный ввод ID экзамена");
+                    return;
+                }
+                bool IDExamExistInBrowseExams = EndedExams.Any(i => i.Id == IdSelectExamToBrowseScors);
+
+                if (IDExamExistInBrowseExams)
+                {
+                    var NameOfSelectExamToBrowseScors = _exams.First(e => e.Id == IdSelectExamToBrowseScors).Name;
+                    var DateOfSelectExamToBrowseScors = _exams.First(e => e.Id == IdSelectExamToBrowseScors).ExamDate;
+
+                    var StudentsInSelectedExamToBrowseScors = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToBrowseScors && i.ExamDate == DateOfSelectExamToBrowseScors).ToList();
+
+                    bool ExistStudentsInSelectedExamToBrowseScors = StudentsInSelectedExamToBrowseScors.Count > 0;
+
+                    if (ExistStudentsInSelectedExamToBrowseScors)
+                    {
+                        Console.WriteLine($"По экзамену {NameOfSelectExamToBrowseScors}, от {DateOfSelectExamToBrowseScors} проставлены следующие оценки:");
+
+                        foreach (var s in StudentsInSelectedExamToBrowseScors)
+                        {
+                            if (s.Score != 0 && s.Score > 1 && s.Score < 6)
+                            {
+                                Console.WriteLine($"Студент {s.StudentName}, получил оценку: {s.Score}");
+                            }
+
+                            else
+                            {
+                                Console.WriteLine($"Студент {s.StudentName}, пока не получил оценку");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("На экзамен с данным ИД не был записан ни один студент.");
+                        Console.ReadKey();
+                    }
+                    
+                }
+
+                else
+                {
+                    Console.WriteLine("Экзамен с данным ИД не существует или не был проведен");
+                    Console.ReadKey();
+                }
+                           
+            }
+            else
+            {
+                Console.WriteLine("Пока не проведено ни одного экзамена");
+                Console.ReadKey();
+            }
+        }
+
+        public void Statistics()
+        {
+            string Choice = "0";
+
+            while (Choice != "3")
+            {
+                Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +
+                            "1. Посмотреть рейтинг по студенту\n" +
+                            "2. Просмотреть что-нибудь ещё\n" +
+                            "3. Выйти в меню преподавателя");
+
+                Choice = Console.ReadLine();
+
+                switch (Choice)
+                {
+                    case "1":
+                        {
+                            _examService.RatingOfStudent();
+                            break;
+                        }
+
+                    case "2":
+                        {
+                            ShowExamWithScore();
+                            break;
+                        }
+
+                    case "3":
+                        {
+                            break;
+                        }
+                    default:
+                        {
+                            Console.WriteLine("Введено неверное значение");
+                            break;
+                        }
+
+                }
+            }
+        }
+    }    
 }
 
