@@ -139,6 +139,7 @@ namespace Exams.Классы
 
         public void ShowDisciplines()
         {
+            Console.Clear();
             Console.WriteLine("Список учебных дисциплин:");
             foreach (var item in _discipline)
             {
@@ -284,7 +285,7 @@ namespace Exams.Классы
             {
                 Console.WriteLine("студенты пока не внесены в список");
             }
-                        
+            Console.ReadKey();           
         }
 
 

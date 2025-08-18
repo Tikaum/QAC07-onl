@@ -29,14 +29,11 @@ namespace Exams.Классы
             {
                 Console.WriteLine("Некорректный ввод ID студента");
                 return;
-            }
-            bool IDStudentExist = _roleAdmin._students.Any(i => i.Id == IDStudent);
+            }            
 
-            if (IDStudentExist)
-            {
-                string NameAddingStudent = _roleAdmin._students.FirstOrDefault(n => n.Id == IDStudent).Name;
-
-                var AllExamsWithStudent = _roleTeacher._examsWithStudents?.Where(a => a.StudentName == NameAddingStudent).ToList() ?? new List<EducationalEntity>();                
+            if (_roleAdmin._students.Any(i => i.Id == IDStudent))
+            {                
+                var AllExamsWithStudent = _roleTeacher._examsWithStudents?.Where(a => a.StudentID == IDStudent).ToList() ?? new List<EducationalEntity>();                
 
                 var AllExamsWithStudentAndMarkScors = AllExamsWithStudent.Where(a => a.Score == 2 || a.Score == 3 || a.Score == 4 || a.Score == 5).ToList();
                 var SuccessExamsWithStudent = AllExamsWithStudent.Where(a => a.Score == 4 || a.Score == 5).ToList();
@@ -47,7 +44,7 @@ namespace Exams.Классы
                 if(AllExamsWithStudentAndMarkScors.Count() > 0)
                 {
                     double Rating = (CountOfSuccessExams / CountOfAllExams) * 100;
-                    Console.WriteLine($"Рейтинг (% успешно сданных экзаменов к их общему количеству) студента {NameAddingStudent} равен: {Rating}");
+                    Console.WriteLine($"Рейтинг (% успешно сданных экзаменов к их общему количеству) студента {_roleTeacher._examsWithStudents.First(a => a.StudentID == IDStudent).StudentName} равен: {Rating}");
                 }
                 else
                 {
@@ -75,10 +72,9 @@ namespace Exams.Классы
             {
                 Console.WriteLine("Некорректный ввод ID учебной дисциплины");
                 return;
-            }
-            bool IDDisciplineExist = _roleAdmin._discipline.Any(i => i.Id == IDSelectedDiscipline);
+            }            
 
-            if (IDDisciplineExist)
+            if (_roleAdmin._discipline.Any(i => i.Id == IDSelectedDiscipline))
             {
                 string NameDiscipline = _roleAdmin._discipline.FirstOrDefault(n => n.Id == IDSelectedDiscipline).Name;
                 
@@ -100,7 +96,7 @@ namespace Exams.Классы
                 }
                 else
                 {
-                    Console.WriteLine($"По учебной дисциплине пока нет ни одной оценки");
+                    Console.WriteLine("По учебной дисциплине пока нет ни одной оценки");
                 }
             }
             Console.ReadKey();

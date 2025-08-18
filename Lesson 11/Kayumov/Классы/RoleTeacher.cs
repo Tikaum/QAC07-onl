@@ -74,9 +74,6 @@ namespace Exams.Классы
                             Statistics();
                             break;
                         }
-
-
-
                     case "6":
                         {                            
                             break;
@@ -221,13 +218,16 @@ namespace Exams.Классы
                         {
                             Console.WriteLine("Некорректный ввод ID студента");
                             return;
-                        }                      
+                        }
 
-                        if (_roleAdmin._students.Any(i => i.Id == IDAddingStudent))
+                        var StudentsIDAlreadyAdding = _examsWithStudents.Any(i => i.Name == NameDiscipline && i.ExamDate == DateExam && i.StudentID == IDAddingStudent);
+
+                        
+                        if (_roleAdmin._students.Any(i => i.Id == IDAddingStudent) && !StudentsIDAlreadyAdding)
                         {
                             string NameAddingStudent = _roleAdmin._students.FirstOrDefault(n => n.Id == IDAddingStudent).Name;
 
-                            // ToDo - добавить отбой, если студент уже добавлен в экзамен
+                            
 
                             Console.Write("Попытка сдачи экзамена №: ");
 
@@ -251,7 +251,8 @@ namespace Exams.Классы
 
                             if (CurrentNumberOfAttemps >= 2)
                             {
-                                Console.WriteLine("Количество попыток сдачи экзамена студентом, превысило допустимый лимит пересдач (не более одной)!");
+                                Console.WriteLine("Количество попыток сдачи экзамена студентом, превысило допустимый лимит пересдач (не более одной)!\n"+
+                                    "Студент не может быть добавлен в список экзаменуемых по данному предмету.");
                                 Console.ReadKey();
                                 return;
                             }
@@ -266,7 +267,7 @@ namespace Exams.Классы
 
                         else
                         {
-                            Console.WriteLine("Студента с таким ИД не существует. При необходимости повторите ввод.");
+                            Console.WriteLine("Студента с таким ИД не существует или он уже добавлен в список. При необходимости повторите ввод.");
                             Console.WriteLine();
                         }
 
@@ -306,9 +307,8 @@ namespace Exams.Классы
 
         public void ShowExamAndDateWithStudents()
         {
-            bool ExistExam = _exams.Count > 0;
-
-            if (ExistExam)
+            Console.Clear();
+            if (_exams.Count > 0)
             {
                 foreach (var e in _exams)
                 {
@@ -343,6 +343,7 @@ namespace Exams.Классы
 
         public void ShowAndGiveMarksForExam()
         {
+            Console.Clear();
             string Choice = "0";
 
             while (Choice != "3")
@@ -397,6 +398,7 @@ namespace Exams.Классы
 
         public void GiveMarksForExam()
         {
+            Console.Clear();
             WhichEndedExams();
 
             if (EndedExams.Count() > 0)
@@ -455,19 +457,7 @@ namespace Exams.Классы
                         }
 
                         Console.WriteLine($"За экзамен по {NameOfSelectExamToGiveScors} от {DateOfSelectExamToGiveScors} успешно проставлены оценки.");
-
-                        //foreach (var s in StudentsInSelectedExamToGiveScors)
-                        //{
-                        //    if (s.Score != 0 && s.Score > 1 && s.Score < 6)
-                        //    {
-                        //        Console.WriteLine($"Студент {s.StudentName}, получил оценку: {s.Score}");
-                        //    }
-
-                        //    else
-                        //    {
-                        //        Console.WriteLine($"Студент {s.StudentName} пока не получил оценку, либо она было проставлена неверно");
-                        //    }
-                        //}
+                                                
                         Console.ReadKey();
                     }
 
@@ -494,6 +484,7 @@ namespace Exams.Классы
 
         public void ShowExamWithScore()
         {
+            Console.Clear();
             WhichEndedExams();
 
             if (EndedExams.Count() > 0)
@@ -535,7 +526,7 @@ namespace Exams.Классы
                                 Console.WriteLine($"Студент {s.StudentName}, пока не получил оценку");
                             }
                         }
-                        Console.ReadKey();
+                        
                     }
                     else
                     {
@@ -562,6 +553,7 @@ namespace Exams.Классы
 
         public void Statistics()
         {
+            Console.Clear();
             string Choice = "0";
 
             while (Choice != "4")
