@@ -121,10 +121,10 @@ namespace Exams.Классы
                 Console.Clear();
                 return;
             }
-            bool IdDisciplineExist = _roleAdmin._discipline.Any(i => i.Id == IDSelectedDiscipline);
+            
             Console.WriteLine();
 
-            if (IdDisciplineExist)
+            if (_roleAdmin._discipline.Any(i => i.Id == IDSelectedDiscipline))
             {
                 string NameDiscipline = _roleAdmin._discipline.FirstOrDefault(n => n.Id == IDSelectedDiscipline).Name;
                 
@@ -221,14 +221,13 @@ namespace Exams.Классы
                         {
                             Console.WriteLine("Некорректный ввод ID студента");
                             return;
-                        }
-                        bool IDAddingStudentExist = _roleAdmin._students.Any(i => i.Id == IDAddingStudent);
+                        }                      
 
-                        if (IDAddingStudentExist)
+                        if (_roleAdmin._students.Any(i => i.Id == IDAddingStudent))
                         {
                             string NameAddingStudent = _roleAdmin._students.FirstOrDefault(n => n.Id == IDAddingStudent).Name;
 
-                            // ToDo - добавить фильтрацию если студент уже добавлен в экзамен
+                            // ToDo - добавить отбой, если студент уже добавлен в экзамен
 
                             Console.Write("Попытка сдачи экзамена №: ");
 
@@ -286,7 +285,7 @@ namespace Exams.Классы
                     Console.WriteLine($"В экзамене по {NameDiscipline}, назначенном на {DateExam}, будут участововать следующие студенты:");
                     foreach (var s in ReportOfAddingStudent)
                     {
-                        Console.WriteLine($"Студент: {s.StudentName}. Попытка: {s.Attempt}");
+                        Console.WriteLine($"{s.StudentName}. Попытка: {s.Attempt}");
                     }
                 }
 
@@ -455,20 +454,20 @@ namespace Exams.Классы
                             }
                         }
 
-                        Console.WriteLine($"За экзамен по {NameOfSelectExamToGiveScors} от {DateOfSelectExamToGiveScors} проставлены следующие оценки:");
+                        Console.WriteLine($"За экзамен по {NameOfSelectExamToGiveScors} от {DateOfSelectExamToGiveScors} успешно проставлены оценки.");
 
-                        foreach (var s in StudentsInSelectedExamToGiveScors)
-                        {
-                            if (s.Score != 0 && s.Score > 1 && s.Score < 6)
-                            {
-                                Console.WriteLine($"Студент {s.StudentName}, получил оценку: {s.Score}");
-                            }
+                        //foreach (var s in StudentsInSelectedExamToGiveScors)
+                        //{
+                        //    if (s.Score != 0 && s.Score > 1 && s.Score < 6)
+                        //    {
+                        //        Console.WriteLine($"Студент {s.StudentName}, получил оценку: {s.Score}");
+                        //    }
 
-                            else
-                            {
-                                Console.WriteLine($"Студент {s.StudentName} пока не получил оценку, либо она было проставлена неверно");
-                            }
-                        }
+                        //    else
+                        //    {
+                        //        Console.WriteLine($"Студент {s.StudentName} пока не получил оценку, либо она было проставлена неверно");
+                        //    }
+                        //}
                         Console.ReadKey();
                     }
 
@@ -490,6 +489,7 @@ namespace Exams.Классы
                 Console.WriteLine("Пока не проведено ни одного экзамена");
                 Console.ReadKey();
             }
+            Console.Clear();
         }
 
         public void ShowExamWithScore()
@@ -517,11 +517,9 @@ namespace Exams.Классы
                     var NameOfSelectExamToBrowseScors = _exams.First(e => e.Id == IdSelectExamToBrowseScors).Name;
                     var DateOfSelectExamToBrowseScors = _exams.First(e => e.Id == IdSelectExamToBrowseScors).ExamDate;
 
-                    var StudentsInSelectedExamToBrowseScors = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToBrowseScors && i.ExamDate == DateOfSelectExamToBrowseScors).ToList();
+                    var StudentsInSelectedExamToBrowseScors = _examsWithStudents.Where(i => i.Name == NameOfSelectExamToBrowseScors && i.ExamDate == DateOfSelectExamToBrowseScors).ToList();                    
 
-                    bool ExistStudentsInSelectedExamToBrowseScors = StudentsInSelectedExamToBrowseScors.Count > 0;
-
-                    if (ExistStudentsInSelectedExamToBrowseScors)
+                    if (StudentsInSelectedExamToBrowseScors.Count > 0)
                     {
                         Console.WriteLine($"По экзамену {NameOfSelectExamToBrowseScors}, от {DateOfSelectExamToBrowseScors} проставлены следующие оценки:");
 
@@ -537,6 +535,7 @@ namespace Exams.Классы
                                 Console.WriteLine($"Студент {s.StudentName}, пока не получил оценку");
                             }
                         }
+                        Console.ReadKey();
                     }
                     else
                     {
@@ -550,26 +549,28 @@ namespace Exams.Классы
                 {
                     Console.WriteLine("Экзамен с данным ИД не существует или не был проведен");
                     Console.ReadKey();
-                }
-                           
+                }                           
             }
             else
             {
                 Console.WriteLine("Пока не проведено ни одного экзамена");
                 Console.ReadKey();
             }
+            Console.ReadKey();
+            Console.Clear();
         }
 
         public void Statistics()
         {
             string Choice = "0";
 
-            while (Choice != "3")
+            while (Choice != "4")
             {
                 Console.WriteLine("Выберите действие (нажмите соответствующий номер):\n" +
                             "1. Посмотреть рейтинг по студенту\n" +
-                            "2. Просмотреть что-нибудь ещё\n" +
-                            "3. Выйти в меню преподавателя");
+                            "2. Просмотреть статистику по предмету\n" +
+                            "3. Просмотреть кандидатов на отчисление по предмету\n" +
+                            "4. Выйти в меню преподавателя");
 
                 Choice = Console.ReadLine();
 
@@ -580,15 +581,18 @@ namespace Exams.Классы
                             _examService.RatingOfStudent();
                             break;
                         }
-
                     case "2":
                         {
-                            ShowExamWithScore();
+                            _examService.StatisticOfDiscipline();                            
                             break;
                         }
-
                     case "3":
                         {
+                            _examService.ShowCandidateForExpulsion();
+                            break;
+                        }
+                    case "4":
+                        {                            
                             break;
                         }
                     default:
